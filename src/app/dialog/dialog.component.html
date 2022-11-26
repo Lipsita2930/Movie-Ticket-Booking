@@ -1,0 +1,32 @@
+
+<h1 mat-dialog-title class="heading">Booking Details</h1>
+<form [formGroup]="inputForm" >
+<div mat-dialog-content>
+    <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input class="inputfield" formControlName="name" matInput placeholder="Enter Name">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input class="inputfield" formControlName="email" matInput placeholder="Enter Email">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Show Time</mat-label>
+        <mat-select formControlName="showtime" placeholder="Show Time">
+            <mat-option value="morning">Morning(9:15 AM)</mat-option>
+            <mat-option value="AfterNoon">AfterNoon(12:30 PM)</mat-option>
+            <mat-option value="Evening">Evening(6:15 PM)</mat-option>
+            <mat-option value="NightShow">Night(9:15 PM)</mat-option>
+        </mat-select>
+     </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Tickets</mat-label>
+        <input class="inputfield" formControlName="noOfTickets" matInput placeholder="Enter No. Of Tickets">
+      </mat-form-field>
+      
+</div>
+<div mat-dialog-action [align]="'end'">
+    <button mat-raised-button color="warn" mat-dialog-close >Close</button>
+    <button mat-raised-button color="primary"style="margin-left: 8px;" (click)="onSubmitHandler(inputForm)">{{actionbtn}}</button>
+</div>
+</form>

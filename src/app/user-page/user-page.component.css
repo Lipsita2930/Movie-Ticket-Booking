@@ -1,0 +1,25 @@
+table {
+    width: 100%;
+  }
+  
+  .mat-form-field {
+    font-size: 14px;
+    width: 100%;
+  }
+  
+  td, th {
+    width: 15%;
+  }
+  ::ng-deep.mat-form-field-infix {
+    color: white;
+  }
+  input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active { 
+    -webkit-box-shadow: 255 255 255  #203A43 inset !important; 
+  }
+
+  input:-webkit-autofill { -webkit-text-fill-color: #212121 !important; }
+  ::ng-deep .mat-form-field-infix {
+   background: transparent;
+   color: white;
+   
+}

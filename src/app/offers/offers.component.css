@@ -1,0 +1,19 @@
+.card{
+ 
+    width: 280px;
+    height: 440px;
+    padding: 2px;
+    margin :5px;
+    border-radius: 10px;
+}
+.row{
+    background-image: linear-gradient(#0F2027,#203A43,#2C5364);
+}
+
+
+.col{
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-around;
+    margin-bottom:28px ;
+  }

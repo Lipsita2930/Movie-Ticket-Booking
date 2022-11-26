@@ -1,0 +1,19 @@
+<app-header (searchTextChanged)="onSearchTextEntered($event)"></app-header>
+  <div class="row">
+    <div class="col" *ngFor="let movie of movies">
+      <div class="films" *ngIf="searchText===''||movie.name.toLowerCase().includes(searchText.toLowerCase())">
+        <div class="card" style="width: 18rem;">
+          <img class="image"src="{{movie.Image}}" class="card-img-top" alt="...">
+          <div class="card-body">
+            <h2 class="card-title">{{movie.name}}</h2>
+            <p class="card-text">{{movie.description}}</p>
+            <a  class="btn btn-primary" (click)="btnClickListener(movie)">Book Now</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+ 
+

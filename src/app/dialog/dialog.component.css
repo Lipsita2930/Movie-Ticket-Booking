@@ -1,0 +1,21 @@
+mat-form-field{
+    width: 100%;
+}
+
+::ng-deep #dialogTrasparent{
+   margin-top: 20%;
+   background-color:rgba(0,0,0,0.6);
+   background-image: linear-gradient(#FFEFBA,#FFFFFF);
+   background-repeat: no-repeat;
+   background-size: cover;
+   color: antiquewhite;
+  }
+  .heading{
+    text-align: center;
+    font-size: 40px;
+    color: black;
+  }
+  .inputfield{
+    color: black;
+  }
+ 

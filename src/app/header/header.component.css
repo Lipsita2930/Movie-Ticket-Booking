@@ -1,0 +1,35 @@
+
+.mynav{
+    background-image: linear-gradient(#000428,black);
+}
+.navimage{
+    border-radius:70%;
+    width: 60px;
+    height: 50px;
+}
+.popheading{
+    font-size: 15px;
+}
+
+.navlinks{
+    display: inline-grid;
+    flex:1;
+}
+.navlinks ul li ::after{
+    content: '';
+    width: 0%;
+    height: 2px;
+    background-color:#f44336;
+    display: block;
+    margin: auto;
+    transition: 0.5s;
+}
+.navlinks ul li:hover ::after{
+    width: 100%;
+}
+.navbar-nav {
+    margin-left: auto;
+}
+.searchBar{
+    width:400px;
+}

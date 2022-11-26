@@ -1,0 +1,41 @@
+
+<body *ngFor="let m of movieDetails" style="height:fit-content; background-image:url({{m.Image}})">
+<app-header></app-header>
+
+  <div class="container" *ngFor="let movie of movieDetails">
+    <div class="poster">
+      <img src="{{movie.Image}}">
+    </div>
+    <div class="info">
+      <div class="movieTitle">
+        {{movie.name}}
+      </div>
+      <div class="movieInformation">
+        <div class="set">
+          <label>Tickets : </label>
+          <!-- <span [(ngModel)]="remaining_tickets"></span> -->
+          <span>{{movie.Tickets}}</span>
+        </div>
+
+        <div class="set">
+          <label>Running Time :  </label>
+          <span>{{ movie.Duration}}</span>
+        </div>
+
+        <div class="set">
+          <label>Gener :  </label>
+          <span>{{movie.description}}</span>
+        </div>
+
+      </div>
+      <div class="movieDescription">
+        {{movie.Desc2}}
+      </div>
+      <button class="btn" (click)="bookListener()">Book Now</button>
+      <!-- <button class="btn" (click)="submitDetails(user)" >People With Me</button> -->
+    </div>
+   </div>
+
+
+</body>
+ 
