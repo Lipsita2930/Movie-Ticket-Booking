@@ -81,29 +81,33 @@ class WorkflowManager:
             return {"messages": [AIMessage(content=f"Error during snowflake query: {e}")]}
 
     def call_tools_node(self, state: MessagesState):
-        print("🔧 Running tool manually...")
-        try:
-            query_msg = state["messages"][-1]
-            tool = self.tools[0]  # Only one tool assumed
-            tool_result = tool.invoke(query_msg)
+    print("🔧 Running tool manually...")
 
-            os.makedirs(os.path.dirname(self.csv_file_path), exist_ok=True)
-            if isinstance(tool_result, pd.DataFrame):
-                tool_result.to_csv(self.csv_file_path, index=False)
-            elif isinstance(tool_result, str):
-                with open(self.csv_file_path, "w") as f:
-                    f.write(tool_result)
+    try:
+        query_msg = state["messages"][-1]
+        query_string = query_msg.content if hasattr(query_msg, "content") else str(query_msg)
 
-            print(f"✅ Tool output saved to: {self.csv_file_path}")
-            return {
-                "messages": [AIMessage(content="Tool execution successful.", tool_result=tool_result)]
-            }
+        tool = self.tools[0]
+        tool_result = tool.invoke({"query": query_string})  # ✅ FIXED: use dict
 
-        except Exception as e:
-            print(f"❌ Tool execution failed: {e}")
-            return {
-                "messages": [AIMessage(content=f"Tool execution failed: {e}")]
-            }
+        os.makedirs(os.path.dirname(self.csv_file_path), exist_ok=True)
+        if isinstance(tool_result, pd.DataFrame):
+            tool_result.to_csv(self.csv_file_path, index=False)
+        elif isinstance(tool_result, str):
+            with open(self.csv_file_path, "w") as f:
+                f.write(tool_result)
+
+        print(f"✅ Tool output saved to: {self.csv_file_path}")
+        return {
+            "messages": [AIMessage(content="Tool execution successful.", tool_result=tool_result)]
+        }
+
+    except Exception as e:
+        print(f"❌ Tool execution failed: {e}")
+        return {
+            "messages": [AIMessage(content=f"Tool execution failed: {e}")]
+        }
+
 
     def call_summary_model(self, state: MessagesState):
         print("🧠 Entering summary generation...")
