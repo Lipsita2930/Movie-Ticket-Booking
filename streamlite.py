@@ -3,50 +3,74 @@ import pandas as pd
 import plotly.express as px
 import os
 
-CSV_PATH = "data.csv"  # Update this to your dynamic CSV file path
+# 🔧 Customize this path to match where your workflow writes the CSV
+CSV_OUTPUT_PATH = "output/output_data.csv"
 
-st.set_page_config(page_title="Dynamic CSV Dashboard", layout="wide")
+# 🧠 Your actual workflow function
+def workflowmanager(user_input):
+    """
+    Simulate running your workflow.
+    Replace this with your actual logic.
+    It saves a CSV file and returns a string log/message.
+    """
+    # Simulated output message
+    message = f"Workflow executed successfully for input: '{user_input}'"
 
-st.title("📊 Dynamic Reporting Dashboard")
+    # Simulate writing a CSV file
+    df = pd.DataFrame({
+        "step": [1, 2, 3, 4],
+        "value": [10, 15, 20, 18]
+    })
+    os.makedirs(os.path.dirname(CSV_OUTPUT_PATH), exist_ok=True)
+    df.to_csv(CSV_OUTPUT_PATH, index=False)
 
-# Reload interval for the CSV
-REFRESH_INTERVAL = 10  # in seconds
+    return message
 
-# Load CSV dynamically
-@st.cache_data(ttl=REFRESH_INTERVAL)
-def load_data():
-    if os.path.exists(CSV_PATH):
-        return pd.read_csv(CSV_PATH)
+
+# 🌐 Streamlit App
+st.set_page_config(page_title="Workflow Runner with Output", layout="wide")
+
+st.title("🛠️ Dynamic Workflow Runner")
+
+# 📥 User Input
+user_input = st.text_input("Enter your input (e.g., keyword or ID):")
+
+if st.button("Run Workflow"):
+    if user_input.strip() == "":
+        st.warning("⚠️ Please enter something.")
     else:
-        return pd.DataFrame()
+        with st.spinner("Running your workflow..."):
+            # Call the workflow
+            result_message = workflowmanager(user_input)
 
-df = load_data()
+        # 📝 Show log/message
+        st.success("✅ Workflow finished!")
+        st.subheader("📄 Log Output:")
+        st.code(result_message)
 
-if df.empty:
-    st.warning("⚠️ CSV file not found or is empty.")
-else:
-    st.subheader("🔍 Preview of the Data")
-    st.dataframe(df, use_container_width=True)
+        # 📊 Try loading and visualizing the generated CSV
+        if os.path.exists(CSV_OUTPUT_PATH):
+            st.subheader("📊 Data Output Preview:")
+            df = pd.read_csv(CSV_OUTPUT_PATH)
+            st.dataframe(df)
 
-    numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+            # 🎨 Chart section
+            numeric_cols = df.select_dtypes(include='number').columns.tolist()
+            if len(numeric_cols) >= 2:
+                x_axis = st.selectbox("X-axis:", options=numeric_cols)
+                y_axis = st.selectbox("Y-axis:", options=numeric_cols, index=1)
 
-    if len(numeric_cols) >= 2:
-        st.subheader("📈 Select Chart Parameters")
+                chart_type = st.radio("Chart Type:", ["Line", "Bar", "Scatter"])
 
-        x_axis = st.selectbox("Select X-axis", numeric_cols)
-        y_axis = st.selectbox("Select Y-axis", numeric_cols, index=1)
+                if chart_type == "Line":
+                    fig = px.line(df, x=x_axis, y=y_axis)
+                elif chart_type == "Bar":
+                    fig = px.bar(df, x=x_axis, y=y_axis)
+                elif chart_type == "Scatter":
+                    fig = px.scatter(df, x=x_axis, y=y_axis)
 
-        chart_type = st.radio("Select Chart Type", ["Line", "Bar", "Scatter"])
-
-        st.subheader("📊 Generated Chart")
-
-        if chart_type == "Line":
-            fig = px.line(df, x=x_axis, y=y_axis, title=f"{chart_type} Chart")
-        elif chart_type == "Bar":
-            fig = px.bar(df, x=x_axis, y=y_axis, title=f"{chart_type} Chart")
-        elif chart_type == "Scatter":
-            fig = px.scatter(df, x=x_axis, y=y_axis, title=f"{chart_type} Chart")
-
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("Need at least two numeric columns to generate a chart.")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("⚠️ Not enough numeric columns for plotting.")
+        else:
+            st.error(f"❌ CSV file not found at: {CSV_OUTPUT_PATH}")
