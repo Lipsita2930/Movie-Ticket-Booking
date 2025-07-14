@@ -1,8 +1,6 @@
 import os
 import pandas as pd
-from typing import Literal
 from langgraph.graph import StateGraph, END, MessagesState
-from langgraph.prebuilt.tool_node import ToolNode
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
@@ -10,13 +8,6 @@ from src.tools import query_snowflake
 from src.llm_manager import LLMManager
 import src.schema_prompt as sp
 import src.summary_prompt as sum_prompt
-
-
-def get_latest_human_message(messages):
-    for msg in reversed(messages):
-        if isinstance(msg, HumanMessage):
-            return msg
-    raise ValueError("❌ No HumanMessage found in state['messages']")
 
 
 class WorkflowManager:
@@ -32,12 +23,15 @@ class WorkflowManager:
     def create_workflow(self):
         workflow = StateGraph(MessagesState)
 
+        # Add nodes
         workflow.add_node("snowflake_query_agent", self.call_snowflake_model)
-        workflow.add_node("tools", self.call_tools_node)
+        workflow.add_node("tools", self.call_tools_node)  # 🔧 FIXED: custom tool node
         workflow.add_node("summary_agent", self.call_summary_model)
 
+        # Entry point
         workflow.set_entry_point("snowflake_query_agent")
 
+        # Retry-aware conditional transitions
         workflow.add_conditional_edges("snowflake_query_agent", self.retry_or_next("snowflake_query_agent", "tools"))
         workflow.add_conditional_edges("tools", self.retry_or_next("tools", "summary_agent"))
         workflow.add_conditional_edges("summary_agent", self.retry_or_next("summary_agent", END))
@@ -75,52 +69,58 @@ class WorkflowManager:
 
     def call_snowflake_model(self, state: MessagesState):
         try:
-            user_msg = get_latest_human_message(state["messages"])
+            user_msg = next(m for m in reversed(state["messages"]) if isinstance(m, HumanMessage))
             system_prompt = sp.get_schema_prompt()
             response = self.llm_manager.invoke_model([
                 SystemMessage(content=system_prompt),
                 user_msg
             ])
-            print("📡 Snowflake LLM query complete")
             return {"messages": [response if isinstance(response, AIMessage) else AIMessage(content=str(response))]}
         except Exception as e:
             print(f"❌ Error in call_snowflake_model: {e}")
-            return {"messages": [AIMessage(content=f"Error during schema prompt step: {str(e)}")]}
+            return {"messages": [AIMessage(content=f"Error during snowflake query: {e}")]}
 
     def call_tools_node(self, state: MessagesState):
-        print("🔧 Executing tools node...")
-        response = ToolNode(self.tools)(state)
+        print("🔧 Running tool manually...")
+        try:
+            query_msg = state["messages"][-1]
+            tool = self.tools[0]  # Only one tool assumed
+            tool_result = tool.invoke(query_msg)
 
-        for msg in response["messages"]:
-            if hasattr(msg, "tool_result"):
-                result = msg.tool_result
-                try:
-                    os.makedirs(os.path.dirname(self.csv_file_path), exist_ok=True)
-                    if isinstance(result, pd.DataFrame):
-                        result.to_csv(self.csv_file_path, index=False)
-                    elif isinstance(result, str):
-                        with open(self.csv_file_path, "w") as f:
-                            f.write(result)
-                    print(f"📁 Tool result saved to: {self.csv_file_path}")
-                except Exception as e:
-                    print(f"❌ Failed to save CSV: {e}")
-        return response
+            os.makedirs(os.path.dirname(self.csv_file_path), exist_ok=True)
+            if isinstance(tool_result, pd.DataFrame):
+                tool_result.to_csv(self.csv_file_path, index=False)
+            elif isinstance(tool_result, str):
+                with open(self.csv_file_path, "w") as f:
+                    f.write(tool_result)
+
+            print(f"✅ Tool output saved to: {self.csv_file_path}")
+            return {
+                "messages": [AIMessage(content="Tool execution successful.", tool_result=tool_result)]
+            }
+
+        except Exception as e:
+            print(f"❌ Tool execution failed: {e}")
+            return {
+                "messages": [AIMessage(content=f"Tool execution failed: {e}")]
+            }
 
     def call_summary_model(self, state: MessagesState):
-        print("🧠 Executing summary node...")
+        print("🧠 Entering summary generation...")
         try:
             summary_prompt = sum_prompt.get_summary_prompt_from_csv(os.path.basename(self.csv_file_path))
+
             if summary_prompt == "No summary can be generated.":
                 return {"messages": [AIMessage(content=summary_prompt)]}
 
             response = self.llm_manager.invoke_model([
                 SystemMessage(content=summary_prompt)
             ])
-            print("✅ Summary generated")
+
             return {"messages": [response if isinstance(response, AIMessage) else AIMessage(content=str(response))]}
         except Exception as e:
             print(f"❌ Error in call_summary_model: {e}")
-            return {"messages": [AIMessage(content=f"Error during summary generation: {str(e)}")]}
+            return {"messages": [AIMessage(content=f"Summary generation error: {e}")]}
 
     def run(self, input_message, thread_id="summary-run-1"):
         initial_state = {
